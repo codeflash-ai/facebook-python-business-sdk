@@ -9,6 +9,7 @@ from facebook_business.adobjects.abstractcrudobject import AbstractCrudObject
 from facebook_business.adobjects.objectparser import ObjectParser
 from facebook_business.api import FacebookRequest
 from facebook_business.typechecker import TypeChecker
+from facebook_business.utils import api_utils
 
 """
 This class is auto-generated.
@@ -637,23 +638,20 @@ class IGUserForIGOnlyAPI(
             return request.execute()
 
     def get_tags(self, fields=None, params=None, batch=None, success=None, failure=None, pending=False):
-        from facebook_business.utils import api_utils
         if batch is None and (success is not None or failure is not None):
-          api_utils.warning('`success` and `failure` callback only work for batch call.')
-        param_types = {
-        }
-        enums = {
-        }
+            api_utils.warning('`success` and `failure` callback only work for batch call.')
+        
         request = FacebookRequest(
             node_id=self['id'],
             method='GET',
             endpoint='/tags',
             api=self._api,
-            param_checker=TypeChecker(param_types, enums),
+            param_checker=TypeChecker({}, {}),
             target_class=AbstractCrudObject,
             api_type='EDGE',
-            response_parser=ObjectParser(target_class=AbstractCrudObject, api=self._api),
+            response_parser=ObjectParser(target_class=AbstractCrudObject, api=self._api)
         )
+        
         request.add_params(params)
         request.add_fields(fields)
 
@@ -755,5 +753,9 @@ class IGUserForIGOnlyAPI(
     def _get_field_enum_info(cls):
         field_enum_info = {}
         return field_enum_info
+
+    @staticmethod
+    def _prepare_file_key(file_counter):
+        return 'source' + str(file_counter)
 
 
