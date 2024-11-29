@@ -49,55 +49,36 @@ class ObjectParser:
         from .adset import AdSet
         from .campaign import Campaign
 
-        data = response
-        if 'data' in response and isinstance(response['data'], dict):
-            data = response['data']
-        elif 'images' in response and not isinstance(data['images'], list):
+        data = response.get('data', response)
+        if 'images' in response and not isinstance(data.get('images', []), list):
             _, data = data['images'].popitem()
 
-        subfields = (
-            ('campaigns', Campaign),
-            ('adsets', AdSet),
-            ('ads', Ad),
-            ('previews', AdPreview),
-        )
-        for subfield, _class in subfields:
-            if subfield not in data:
-                continue
+        subfields = {
+            'campaigns': Campaign,
+            'adsets': AdSet,
+            'ads': Ad,
+            'previews': AdPreview
+        }
 
-            data[subfield] = [
-                self.parse_single(
-                    item, override_target_class=_class
-                ) for item in data[subfield]['data']
-            ]
+        for subfield, _class in subfields.items():
+            if subfield in data:
+                data[subfield] = [
+                    self.parse_single(item, override_target_class=_class)
+                    for item in data[subfield]['data']
+                ]
 
-        if 'success' in data:
-            del data['success']
+        data.pop('success', None)
 
         target_class = override_target_class or self._target_class
-
         if self._reuse_object is not None:
             self._reuse_object._set_data(data)
             return self._reuse_object
         elif self._target_class is not None:
-            return AbstractObject.create_object(self._api, data,
-                                                target_class)
+            return AbstractObject.create_object(self._api, data, target_class)
         else:
             raise FacebookBadObjectError(
-                'Must specify either target class calling object' +
-                'or custom parse method for parser')
+                'Specify either target class, reuse_object, or custom_parse_method')
 
     def parse_multiple(self, response):
-        if 'data' in response and isinstance(response['data'], list):
-            ret = []
-            if isinstance(response['data'], list):
-                for json_obj in response['data']:
-                    ret.append(self.parse_single(json_obj))
-            else:
-                ret.append(self.parse_single(response['data']))
-        else:
-            data = response['data'] if 'data' in response else response
-            ret = [AbstractObject.create_object(self._api, data,
-                                                self._target_class)]
-
-        return ret
+        data_list = response.get('data', [response])
+        return [self.parse_single(json_obj) for json_obj in data_list]
