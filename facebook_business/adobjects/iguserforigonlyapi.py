@@ -9,6 +9,7 @@ from facebook_business.adobjects.abstractcrudobject import AbstractCrudObject
 from facebook_business.adobjects.objectparser import ObjectParser
 from facebook_business.api import FacebookRequest
 from facebook_business.typechecker import TypeChecker
+from facebook_business.utils import api_utils
 
 """
 This class is auto-generated.
@@ -437,19 +438,14 @@ class IGUserForIGOnlyAPI(
             return request.execute()
 
     def get_messenger_profile(self, fields=None, params=None, batch=None, success=None, failure=None, pending=False):
-        from facebook_business.utils import api_utils
         if batch is None and (success is not None or failure is not None):
-          api_utils.warning('`success` and `failure` callback only work for batch call.')
-        param_types = {
-        }
-        enums = {
-        }
+            api_utils.warning('`success` and `failure` callback only work for batch call.')
         request = FacebookRequest(
             node_id=self['id'],
             method='GET',
             endpoint='/messenger_profile',
             api=self._api,
-            param_checker=TypeChecker(param_types, enums),
+            param_checker=TypeChecker({}, {}),
             target_class=AbstractCrudObject,
             api_type='EDGE',
             response_parser=ObjectParser(target_class=AbstractCrudObject, api=self._api),
@@ -755,5 +751,18 @@ class IGUserForIGOnlyAPI(
     def _get_field_enum_info(cls):
         field_enum_info = {}
         return field_enum_info
+    def extract_map_collection(self, value_type):
+        sub_types = self.get_type_from_collection(value_type, 'map')
+        return sub_types[0], sub_types[1] if len(sub_types) > 1 else 'string'
+
+def isValidTypeInEnum(enum_data, value_type, value):
+    return value_type in enum_data and value in enum_data[value_type]
+
+def isValidType(value_type, expected_type, func=None, args=[]):
+    if isinstance(expected_type, list):
+        return value_type in expected_type
+    if func:
+        return func(*args)
+    return False
 
 
