@@ -7,10 +7,11 @@
 import warnings
 from facebook_business import apiconfig
 from facebook_business.exceptions import FacebookBadObjectError
+from facebook_business.utils import api_utils
 
 
 def warning(message):
-    if apiconfig.ads_api_config['STRICT_MODE']:
+    if api_utils.config['STRICT_MODE']:
         raise FacebookBadObjectError(message)
     else:
         warnings.warn(message)
