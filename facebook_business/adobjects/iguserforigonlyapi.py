@@ -9,6 +9,7 @@ from facebook_business.adobjects.abstractcrudobject import AbstractCrudObject
 from facebook_business.adobjects.objectparser import ObjectParser
 from facebook_business.api import FacebookRequest
 from facebook_business.typechecker import TypeChecker
+from facebook_business.utils.api_utils import warning
 
 """
 This class is auto-generated.
@@ -276,22 +277,19 @@ class IGUserForIGOnlyAPI(
             return request.execute()
 
     def create_mention(self, fields=None, params=None, batch=None, success=None, failure=None, pending=False):
-        from facebook_business.utils import api_utils
-        if batch is None and (success is not None or failure is not None):
-          api_utils.warning('`success` and `failure` callback only work for batch call.')
+        if batch is None and (success or failure):
+            warning('`success` and `failure` callback only work for batch call.')
         param_types = {
             'comment_id': 'string',
             'media_id': 'string',
             'message': 'string',
-        }
-        enums = {
         }
         request = FacebookRequest(
             node_id=self['id'],
             method='POST',
             endpoint='/mentions',
             api=self._api,
-            param_checker=TypeChecker(param_types, enums),
+            param_checker=TypeChecker(param_types, {}),
             target_class=AbstractCrudObject,
             api_type='EDGE',
             response_parser=ObjectParser(target_class=AbstractCrudObject, api=self._api),
@@ -299,14 +297,14 @@ class IGUserForIGOnlyAPI(
         request.add_params(params)
         request.add_fields(fields)
 
-        if batch is not None:
+        if batch:
             request.add_to_batch(batch, success=success, failure=failure)
             return request
-        elif pending:
+        if pending:
             return request
-        else:
-            self.assure_call()
-            return request.execute()
+        
+        self.assure_call()
+        return request.execute()
 
     def create_message_attachment(self, fields=None, params=None, batch=None, success=None, failure=None, pending=False):
         from facebook_business.utils import api_utils
