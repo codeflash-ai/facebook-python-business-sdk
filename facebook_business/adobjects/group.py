@@ -9,6 +9,7 @@ from facebook_business.adobjects.abstractcrudobject import AbstractCrudObject
 from facebook_business.adobjects.objectparser import ObjectParser
 from facebook_business.api import FacebookRequest
 from facebook_business.typechecker import TypeChecker
+from facebook_business.adobjects.livevideo import LiveVideo
 
 """
 This class is auto-generated.
@@ -642,10 +643,9 @@ class Group(
             return request.execute()
 
     def get_live_videos(self, fields=None, params=None, batch=None, success=None, failure=None, pending=False):
-        from facebook_business.utils import api_utils
         if batch is None and (success is not None or failure is not None):
-          api_utils.warning('`success` and `failure` callback only work for batch call.')
-        from facebook_business.adobjects.livevideo import LiveVideo
+            warning('`success` and `failure` callback only work for batch call.')
+
         param_types = {
             'broadcast_status': 'list<broadcast_status_enum>',
             'source': 'source_enum',
