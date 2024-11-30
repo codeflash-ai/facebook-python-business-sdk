@@ -6,13 +6,15 @@
 
 import sys
 import os
+import json
+from facebook_business.adobjects import *
+from facebook_business.api import FacebookAdsApi
 
 this_dir = os.path.dirname(__file__)
 repo_dir = os.path.join(this_dir, os.pardir)
 sys.path.insert(1, repo_dir)
 
 import json
-from facebook_business.session import FacebookSession
 from facebook_business.api import FacebookAdsApi
 from facebook_business.adobjects import *
 from facebook_business.exceptions import FacebookError
@@ -42,8 +44,7 @@ class Authentication():
     @classmethod
     def load_config(cls):
         with open(os.path.join(repo_dir, 'config.json')) as config_file:
-            config = json.load(config_file)
-        return config
+            return json.load(config_file)
 
     @classmethod
     def auth(cls):
@@ -56,37 +57,53 @@ class Authentication():
         if cls._is_authenticated:
             return config['act_id'], config.get('page_id', None)
 
-        if config['app_id'] and config['app_secret'] \
-           and config['act_id'] and config['access_token']:
+        required_fields = {'app_id', 'app_secret', 'act_id', 'access_token'}
+        missing_fields = required_fields - config.keys()
 
+        if not missing_fields:
             FacebookAdsApi.init(
                 config['app_id'],
                 config['app_secret'],
                 config['access_token'],
                 config['act_id'],
             )
-
             cls._is_authenticated = True
-
             return config['act_id'], config.get('page_id', None)
 
-        else:
-            required_fields = set(
-                ('app_id', 'app_secret', 'act_id', 'access_token')
-            )
-
-            missing_fields = required_fields - set(config.keys())
-            raise FacebookError(
-                '\n\tFile config.json needs to have the following fields: {}\n'
-                '\tMissing fields: {}\n'.format(
-                    ', '.join(required_fields),
-                    ', '.join(missing_fields),
-                )
-            )
+        raise FacebookError(
+            '\n\tFile config.json needs to have the following fields: {}\n'
+            '\tMissing fields: {}\n'.format(', '.join(required_fields), ', '.join(missing_fields))
+        )
 
 
+@classmethod
 def auth():
-    return Authentication.auth()
+    """
+            Prepare for Ads API calls and return a tuple with act_id
+            and page_id. page_id can be None but act_id is always set.
+        """
+    config = cls.load_config()
+
+    if cls._is_authenticated:
+        return config['act_id'], config.get('page_id', None)
+
+    required_fields = {'app_id', 'app_secret', 'act_id', 'access_token'}
+    missing_fields = required_fields - config.keys()
+
+    if not missing_fields:
+        FacebookAdsApi.init(
+            config['app_id'],
+            config['app_secret'],
+            config['access_token'],
+            config['act_id'],
+        )
+        cls._is_authenticated = True
+        return config['act_id'], config.get('page_id', None)
+
+    raise FacebookError(
+        '\n\tFile config.json needs to have the following fields: {}\n'
+        '\tMissing fields: {}\n'.format(', '.join(required_fields), ', '.join(missing_fields))
+    )
 
 if sys.flags.interactive:
     auth()
