@@ -10,7 +10,7 @@ from facebook_business.exceptions import FacebookBadObjectError
 
 
 def warning(message):
-    if apiconfig.ads_api_config['STRICT_MODE']:
+    if apiconfig.ads_api_config.get('STRICT_MODE', False):
         raise FacebookBadObjectError(message)
     else:
         warnings.warn(message)
