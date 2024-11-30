@@ -831,87 +831,8 @@ class Group(
             return request.execute()
 
     def create_photo(self, fields=None, params=None, batch=None, success=None, failure=None, pending=False):
-        from facebook_business.utils import api_utils
-        if batch is None and (success is not None or failure is not None):
-          api_utils.warning('`success` and `failure` callback only work for batch call.')
         from facebook_business.adobjects.photo import Photo
-        param_types = {
-            'aid': 'string',
-            'allow_spherical_photo': 'bool',
-            'alt_text_custom': 'string',
-            'android_key_hash': 'string',
-            'application_id': 'string',
-            'attempt': 'unsigned int',
-            'audience_exp': 'bool',
-            'backdated_time': 'datetime',
-            'backdated_time_granularity': 'backdated_time_granularity_enum',
-            'caption': 'string',
-            'composer_session_id': 'string',
-            'direct_share_status': 'unsigned int',
-            'feed_targeting': 'Object',
-            'filter_type': 'unsigned int',
-            'full_res_is_coming_later': 'bool',
-            'initial_view_heading_override_degrees': 'unsigned int',
-            'initial_view_pitch_override_degrees': 'unsigned int',
-            'initial_view_vertical_fov_override_degrees': 'unsigned int',
-            'ios_bundle_id': 'string',
-            'is_explicit_location': 'bool',
-            'is_explicit_place': 'bool',
-            'manual_privacy': 'bool',
-            'message': 'string',
-            'name': 'string',
-            'no_story': 'bool',
-            'offline_id': 'unsigned int',
-            'og_action_type_id': 'string',
-            'og_icon_id': 'string',
-            'og_object_id': 'string',
-            'og_phrase': 'string',
-            'og_set_profile_badge': 'bool',
-            'og_suggestion_mechanism': 'string',
-            'place': 'Object',
-            'privacy': 'string',
-            'profile_id': 'int',
-            'proxied_app_id': 'string',
-            'published': 'bool',
-            'qn': 'string',
-            'spherical_metadata': 'map',
-            'sponsor_id': 'string',
-            'sponsor_relationship': 'unsigned int',
-            'tags': 'list<Object>',
-            'target_id': 'int',
-            'targeting': 'Object',
-            'time_since_original_post': 'unsigned int',
-            'uid': 'int',
-            'unpublished_content_type': 'unpublished_content_type_enum',
-            'url': 'string',
-            'user_selected_tags': 'bool',
-            'vault_image_id': 'string',
-        }
-        enums = {
-            'backdated_time_granularity_enum': Photo.BackdatedTimeGranularity.__dict__.values(),
-            'unpublished_content_type_enum': Photo.UnpublishedContentType.__dict__.values(),
-        }
-        request = FacebookRequest(
-            node_id=self['id'],
-            method='POST',
-            endpoint='/photos',
-            api=self._api,
-            param_checker=TypeChecker(param_types, enums),
-            target_class=Photo,
-            api_type='EDGE',
-            response_parser=ObjectParser(target_class=Photo, api=self._api),
-        )
-        request.add_params(params)
-        request.add_fields(fields)
-
-        if batch is not None:
-            request.add_to_batch(batch, success=success, failure=failure)
-            return request
-        elif pending:
-            return request
-        else:
-            self.assure_call()
-            return request.execute()
+        return self._create_request('/photos', 'POST', Photo, fields, params, batch, success, failure, pending)
 
     def get_picture(self, fields=None, params=None, batch=None, success=None, failure=None, pending=False):
         from facebook_business.utils import api_utils
@@ -1116,5 +1037,33 @@ class Group(
         field_enum_info['Purpose'] = Group.Purpose.__dict__.values()
         field_enum_info['GroupType'] = Group.GroupType.__dict__.values()
         return field_enum_info
+
+    def _create_request(self, endpoint, method, target_class, fields=None, params=None, batch=None, success=None, failure=None, pending=False):
+        from facebook_business.utils import api_utils
+        if batch is None and (success is not None or failure is not None):
+            api_utils.warning('`success` and `failure` callback only work for batch call.')
+        param_types = {}
+        enums = {}
+        request = FacebookRequest(
+            node_id=self['id'],
+            method=method,
+            endpoint=endpoint,
+            api=self._api,
+            param_checker=TypeChecker(param_types, enums),
+            target_class=target_class,
+            api_type='EDGE' if endpoint != '/' else 'NODE',
+            response_parser=ObjectParser(reuse_object=self if target_class is AbstractCrudObject else None, target_class=target_class, api=self._api if target_class is not AbstractCrudObject else None),
+        )
+        request.add_params(params)
+        request.add_fields(fields)
+
+        if batch is not None:
+            request.add_to_batch(batch, success=success, failure=failure)
+            return request
+        elif pending:
+            return request
+        else:
+            self.assure_call()
+            return request.execute()
 
 
